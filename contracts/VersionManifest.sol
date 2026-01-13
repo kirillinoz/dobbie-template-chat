@@ -20,7 +20,7 @@ contract VersionManifest {
     error ContractNotFound();
 
     /// @notice The semantic version string of the manifest format itself
-    string public constant VERSION = "0.0.1";
+    string public constant VERSION = "0.0.2";
 
     /// @notice The project identifier
     bytes32 public immutable PROJECT_ID;
