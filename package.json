@@ -1,0 +1,47 @@
+{
+  "name": "dobbie-template",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "hardhat test && hardhat run test/Counter.ts",
+    "compile": "hardhat compile",
+    "lint": "eslint . --ext .ts && solhint 'contracts/**/*.sol' && pnpm prettier:check",
+    "prettier:check": "prettier --check '**/*.{ts,json,sol}'",
+    "prettier:fix": "prettier --write '**/*.{ts,json,sol}'",
+    "deploy:sepolia": "pnpm hardhat ignition deploy --network sepolia ignition/modules/DevSystem.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ignition": "^3.0.6",
+    "@types/archiver": "^6.0.4",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.18.11",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "ethers": "^6.15.0",
+    "forge-std": "github:foundry-rs/forge-std#v1.9.4",
+    "fs-extra": "^11.3.2",
+    "hardhat": "^3.0.7",
+    "prettier": "^3.6.2",
+    "prettier-plugin-solidity": "^2.1.0",
+    "solhint": "^6.0.1",
+    "typescript": "~5.8.0",
+    "viem": "^2.30.0"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-ignition-viem": "^3.0.6",
+    "@nomicfoundation/hardhat-network-helpers": "^3.0.3",
+    "@nomicfoundation/hardhat-viem": "^3.0.1",
+    "@types/form-data": "^2.5.2",
+    "@types/node-fetch": "^2.6.13",
+    "archiver": "^7.0.1",
+    "dotenv": "^16.4.5",
+    "form-data": "^4.0.4",
+    "kubo-rpc-client": "^6.0.2",
+    "node-fetch": "^3.3.2",
+    "viem": "^2.13.10"
+  },
+  "packageManager": "pnpm@9.12.1"
+}

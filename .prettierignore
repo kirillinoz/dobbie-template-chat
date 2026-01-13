@@ -1,0 +1,18 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+
+# Hardhat artifacts
+cache
+artifacts
+deployments
+
+# Generated files
+abi
+scripts/devops/output
+sovereign-test/hardhat.verify.cjs
+sovereign-test/hardhat.verify.config.js
+sovereign-test/tsconfig.json

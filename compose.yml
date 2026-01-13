@@ -1,0 +1,16 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  deploy:
+    # Build the image from the Dockerfile in the current directory
+    build: .
+    # Pass in the necessary environment variables for the deployment
+    environment:
+      - SEPOLIA_RPC_URL=${SEPOLIA_RPC_URL}
+      - WALLET_KEY=${WALLET_KEY}
+      - GOVERNOR_ADDRESS=${GOVERNOR_ADDRESS}
+      - DEPLOYMENT_REGISTRY_ADDRESS=${DEPLOYMENT_REGISTRY_ADDRESS}
+      - HARDHAT_IGNITION_CONFIRM_DEPLOYMENT=false
+    # The command to run inside the container
+    command: pnpm hardhat ignition deploy ignition/modules/Counter.ts --network sepolia

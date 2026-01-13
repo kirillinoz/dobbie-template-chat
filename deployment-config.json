@@ -1,0 +1,10 @@
+{
+  "contracts": [
+    {
+      "name": "Counter",
+      "constructorArgs": [],
+      "constructorTypes": ""
+    }
+  ],
+  "_comment": "VersionManifest is NOT listed here - it's built dynamically by propose.ts"
+}

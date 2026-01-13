@@ -1,0 +1,18 @@
+# Node
+node_modules
+npm-debug.log
+
+# Hardhat
+artifacts
+cache
+
+# Build Outputs
+proposal-package/
+proposal-package.zip
+dist/
+
+# Secrets
+.env
+
+# Sovereign Tests
+sovereign-test

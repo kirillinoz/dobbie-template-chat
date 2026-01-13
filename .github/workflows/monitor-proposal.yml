@@ -1,0 +1,207 @@
+name: 2. Monitor On-Chain Proposal Status
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  discover-and-process:
+    name: 'Discover & Process All Proposals'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+      statuses: write
+      issues: write
+
+    env:
+      SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+      GOVERNOR_ADDRESS: ${{ secrets.GOVERNOR_ADDRESS }}
+      PROPAGATOR_KEY: ${{ secrets.PROPAGATOR_KEY }}
+      WALLET_KEY: ${{ secrets.PROPAGATOR_KEY }} # For hardhat config
+      PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      DEPLOYMENT_BLOCK: ${{ secrets.DEPLOYMENT_BLOCK }}
+
+    steps:
+      - name: 'Checkout Code'
+        uses: actions/checkout@v4
+
+      - name: 'Setup pnpm'
+        uses: pnpm/action-setup@v4
+
+      - name: 'Setup Node.js 22 (LTS)'
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: 'Install Dependencies'
+        run: pnpm install --frozen-lockfile
+
+      - name: 'Discover & Process All Proposals'
+        id: discover
+        run: pnpm hardhat run ./scripts/devops/discover-proposals.ts --network sepolia
+
+      - name: 'Update PR Statuses'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const contextName = "On-Chain Vote";
+
+            // Load discovery results
+            let discoveryResults = [];
+            try {
+              if (fs.existsSync('scripts/devops/output/proposal-states.json')) {
+                discoveryResults = JSON.parse(fs.readFileSync('scripts/devops/output/proposal-states.json', 'utf8'));
+                console.log(`📦 Loaded ${discoveryResults.length} proposal states from discovery`);
+              }
+            } catch (e) {
+              console.log('No discovery results found, skipping PR updates.');
+              return;
+            }
+
+            // Build proposalId -> state map
+            const proposalStateMap = new Map();
+            for (const result of discoveryResults) {
+              proposalStateMap.set(result.proposalId, {
+                stateName: result.stateName,
+                action: result.action
+              });
+            }
+
+            console.log("--- Starting PR Status Update ---");
+            const { data: prs } = await github.rest.pulls.list({
+              owner, repo, state: 'open',
+            });
+
+            const prIdRegex = /PROPOSAL-ID: (\w+)/;
+            const prShaRegex = /HEAD-SHA: ([a-f0-9]{40})/;
+
+            for (const pr of prs) {
+              console.log(`\nChecking PR #${pr.number}: ${pr.title}`);
+              const { data: comments } = await github.rest.issues.listComments({
+                owner, repo, issue_number: pr.number,
+              });
+              
+              const prComment = comments.filter(c => c.body.includes('### 🤖 Proposal Submitted On-Chain')).pop();
+              if (!prComment) {
+                console.log(`  No proposal comment found, skipping.`);
+                continue;
+              }
+
+              const idMatch = prComment.body.match(prIdRegex);
+              const shaMatch = prComment.body.match(prShaRegex);
+
+              if (!idMatch || !shaMatch) {
+                console.log(`  Missing proposal ID or SHA in comment, skipping.`);
+                continue;
+              }
+              
+              const proposalId = idMatch[1];
+              const headSha = shaMatch[1];
+              
+              // Use state from blockchain discovery
+              const stateInfo = proposalStateMap.get(proposalId);
+              if (!stateInfo) {
+                console.log(`  Proposal ${proposalId} not found in discovery results, skipping.`);
+                continue;
+              }
+
+              const stateName = stateInfo.stateName;
+              console.log(`  Proposal ${proposalId} state: ${stateName}`);
+
+              let commitState, description, newStateLine;
+
+              switch (stateName) {
+                case "Executed":
+                  commitState = 'success';
+                  description = 'Proposal Executed & Contract Deployed!';
+                  newStateLine = '🗳️ **Vote 1 State** | ████ | ✅ Deployed';
+                  
+                  try {
+                    console.log(`  Attempting to merge PR #${pr.number}...`);
+                    
+                    await github.rest.pulls.merge({
+                      owner,
+                      repo,
+                      pull_number: pr.number,
+                      merge_method: 'squash', 
+                      commit_title: `On-Chain Execution: ${pr.title} (Proposal ${proposalId})`
+                    });
+                    console.log("  ✅ PR Merged successfully.");
+                    
+                  } catch (mergeError) {
+                    console.error("  ❌ Auto-merge failed:", mergeError.message);
+                    
+                    await github.rest.issues.createComment({
+                      owner, repo, issue_number: pr.number,
+                      body: `❌ **MERGE CONFLICT DETECTED**
+                      
+            This proposal has been **EXECUTED on-chain**, but I cannot merge it automatically due to conflicts with the current \`main\` branch.
+
+            **Action Required:**
+            1. Maintainers must manually resolve conflicts in this PR.
+            2. Merge this PR immediately to ensure \`main\` matches the on-chain state.
+            3. **DO NOT CLOSE** this PR without merging, or the repository will be out of sync with the smart contracts.`
+                    });
+
+                    await github.rest.issues.addLabels({
+                      owner, repo, issue_number: pr.number,
+                      labels: ['CRITICAL: Sync Required', 'On-Chain Executed']
+                    });
+                  }
+                  break;
+
+                case "Canceled":
+                case "Defeated":
+                case "Expired":
+                  commitState = 'failure';
+                  description = `Proposal ${stateName}.`;
+                  newStateLine = `🗳️ **Vote 1 State** | ████ | ❌ ${stateName}`;
+                  break;
+
+                case "Succeeded":
+                  commitState = 'pending';
+                  description = 'Vote Passed. Queuing...';
+                  newStateLine = '🗳️ **Vote 1 State** | ███▒ | ⌛ Succeeded';
+                  break;
+
+                case "Queued":
+                  commitState = 'pending';
+                  description = 'Timelock Active...';
+                  newStateLine = '🗳️ **Vote 1 State** | ███▒ | ⏳ Queued';
+                  break;
+
+                case "Pending":
+                  commitState = 'pending';
+                  description = 'Waiting for voting to start...';
+                  newStateLine = '🗳️ **Vote 1 State** | █▒▒▒ | ⏳ Pending';
+                  break;
+
+                case "Active":
+                default:
+                  commitState = 'pending';
+                  description = 'Vote Active...';
+                  newStateLine = '🗳️ **Vote 1 State** | ██▒▒ | ⌛ Active';
+              }
+
+              // Update commit status
+              await github.rest.repos.createCommitStatus({
+                owner, repo, sha: headSha, state: commitState, description, context: contextName
+              });
+
+              // Update PR comment with new state
+              const stateRegex = /(🗳️ \*\*Vote 1 State\*\* \| .*)/;
+              if (!prComment.body.includes(newStateLine)) {
+                await github.rest.issues.updateComment({
+                  owner, repo, comment_id: prComment.id,
+                  body: prComment.body.replace(stateRegex, newStateLine)
+                });
+                console.log(`  Updated comment with state: ${stateName}`);
+              }
+            }
+            console.log('\n--- PR Status Update Complete ---');
