@@ -1,7 +1,17 @@
 {
   "contracts": [
     {
-      "name": "Counter",
+      "name": "HubChatRewards",
+      "constructorArgs": [],
+      "constructorTypes": ""
+    },
+    {
+      "name": "HubChatBaseDailyStreaks",
+      "constructorArgs": [],
+      "constructorTypes": ""
+    },
+    {
+      "name": "CeloChatDailyRewards",
       "constructorArgs": [],
       "constructorTypes": ""
     }
