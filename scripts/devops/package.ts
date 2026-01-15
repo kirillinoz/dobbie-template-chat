@@ -7,7 +7,6 @@ const PROPOSAL_PACKAGE_DIR = 'proposal-package';
 
 const IGNORE_LIST = [
   '.git', // Version control history (huge)
-  '.github', // GitHub Actions workflows (not needed for logic)
   '.env', // ❌ SECRETS (Critical to exclude)
   'node_modules', // Dependencies (huge, will be re-installed)
   'cache', // Hardhat cache
@@ -15,6 +14,51 @@ const IGNORE_LIST = [
   'sovereign-test', // ❌ PRIVATE VERIFICATION TESTS (Must stay secret)
   '.DS_Store', // macOS garbage
 ];
+
+/**
+ * Gets list of files changed compared to origin/main.
+ * This allows stakeholders to quickly identify what needs review.
+ */
+function getChangedFiles(): string[] {
+  try {
+    // Ensure we have the latest main
+    execSync('git fetch origin main', { stdio: 'pipe' });
+
+    // Get list of changed files (added, modified, deleted)
+    const diffOutput = execSync('git diff --name-status origin/main...HEAD', {
+      encoding: 'utf-8',
+    });
+
+    // Parse the output into a structured format
+    const changedFiles = diffOutput
+      .trim()
+      .split('\n')
+      .filter((line) => line.length > 0)
+      .map((line) => {
+        const [status, ...pathParts] = line.split('\t');
+        const filePath = pathParts.join('\t'); // Handle filenames with tabs
+        const statusLabel =
+          status === 'A'
+            ? 'added'
+            : status === 'M'
+              ? 'modified'
+              : status === 'D'
+                ? 'deleted'
+                : status.startsWith('R')
+                  ? 'renamed'
+                  : 'changed';
+        return `[${statusLabel}] ${filePath}`;
+      });
+
+    return changedFiles;
+  } catch (error) {
+    console.warn(
+      'Warning: Could not get changed files list:',
+      (error as Error).message
+    );
+    return ['Error: Could not determine changed files'];
+  }
+}
 
 function cleanup() {
   console.log('Cleaning up previous build...');
@@ -55,10 +99,12 @@ function packageFiles(commitHash: string) {
   }
 
   // Save metadata
+  const changedFiles = getChangedFiles();
   const metadata = {
     commitHash: commitHash,
     createdAt: new Date().toISOString(),
     packagingStrategy: 'FULL_REPO_WITH_EXCLUSIONS',
+    changedFiles: changedFiles,
   };
   const metadataPath = path.join(
     PROPOSAL_PACKAGE_DIR,
