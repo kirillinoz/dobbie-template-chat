@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "hardhat test && hardhat run test/Counter.ts",
+    "test": "hardhat test && hardhat run test/VersionManifest.ts",
     "compile": "hardhat compile",
     "lint": "eslint . --ext .ts && solhint 'contracts/**/*.sol' && pnpm prettier:check",
     "prettier:check": "prettier --check '**/*.{ts,json,sol}'",
