@@ -66,12 +66,33 @@ async function main() {
 
   // Normalize (Strip Metadata Hash)
   const metadataRegex = /a26469706673[a-f0-9]+$/;
-  const cleanOnChain = onChainCode.replace(metadataRegex, '');
-  const cleanLocal = localCode.replace(metadataRegex, '');
+  let cleanOnChain = onChainCode.replace(metadataRegex, '');
+  let cleanLocal = localCode.replace(metadataRegex, '');
 
   console.log('--------------------------------------------------');
-  console.log(`On-Chain Length (Clean): ${cleanOnChain.length}`);
-  console.log(`Local Length (Clean):    ${cleanLocal.length}`);
+  // Mask Immutables
+  const immutableRefs = (artifact as any).immutableReferences;
+  if (immutableRefs) {
+    console.log('  🛡️ Masking Immutable Variables...');
+    const mask = (code: string) => {
+      const buffer = Buffer.from(code.replace('0x', ''), 'hex');
+      for (const id in immutableRefs) {
+        for (const range of immutableRefs[id]) {
+          const start = range.start;
+          const length = range.length;
+          // Zero out the range
+          buffer.fill(0, start, start + length);
+        }
+      }
+      return '0x' + buffer.toString('hex');
+    };
+
+    cleanOnChain = mask(cleanOnChain);
+    cleanLocal = mask(cleanLocal);
+  }
+
+  console.log(`On-Chain Length (Masked): ${cleanOnChain.length}`);
+  console.log(`Local Length (Masked):    ${cleanLocal.length}`);
   console.log('--------------------------------------------------');
 
   if (cleanOnChain === cleanLocal) {
