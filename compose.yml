@@ -7,7 +7,7 @@ services:
     build: .
     # Pass in the necessary environment variables for the deployment
     environment:
-      - SEPOLIA_RPC_URL=${SEPOLIA_RPC_URL}
+      - RPC_URL=${RPC_URL}
       - WALLET_KEY=${WALLET_KEY}
       - GOVERNOR_ADDRESS=${GOVERNOR_ADDRESS}
       - DEPLOYMENT_REGISTRY_ADDRESS=${DEPLOYMENT_REGISTRY_ADDRESS}
