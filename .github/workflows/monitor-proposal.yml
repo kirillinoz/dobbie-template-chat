@@ -17,7 +17,7 @@ jobs:
       issues: write
 
     env:
-      SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+      RPC_URL: ${{ secrets.RPC_URL }}
       GOVERNOR_ADDRESS: ${{ secrets.GOVERNOR_ADDRESS }}
       PROPAGATOR_KEY: ${{ secrets.PROPAGATOR_KEY }}
       WALLET_KEY: ${{ secrets.PROPAGATOR_KEY }} # For hardhat config

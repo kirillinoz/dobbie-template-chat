@@ -11,7 +11,7 @@ jobs:
     name: 'Verify Main vs On-Chain'
     runs-on: ubuntu-latest
     env:
-      SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+      RPC_URL: ${{ secrets.RPC_URL }}
       DEPLOYMENT_REGISTRY_ADDRESS: ${{ secrets.DEPLOYMENT_REGISTRY_ADDRESS }}
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
 
