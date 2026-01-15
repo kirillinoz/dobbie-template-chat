@@ -79,7 +79,7 @@ jobs:
       proposal_block: ${{ steps.propose.outputs.proposal_block }}
 
     env:
-      SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+      RPC_URL: ${{ secrets.RPC_URL }}
       GOVERNOR_ADDRESS: ${{ secrets.GOVERNOR_ADDRESS }}
       DEPLOYMENT_REGISTRY_ADDRESS: ${{ secrets.DEPLOYMENT_REGISTRY_ADDRESS }}
       PROPOSER_KEY: ${{ secrets.PROPOSER_KEY }}
