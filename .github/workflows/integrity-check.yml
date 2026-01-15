@@ -14,6 +14,7 @@ jobs:
       RPC_URL: ${{ secrets.RPC_URL }}
       DEPLOYMENT_REGISTRY_ADDRESS: ${{ secrets.DEPLOYMENT_REGISTRY_ADDRESS }}
       PROJECT_ID: ${{ secrets.PROJECT_ID }}
+      WALLET_KEY: ${{ secrets.PROPOSER_KEY }}
 
     steps:
       - name: 'Checkout Code'

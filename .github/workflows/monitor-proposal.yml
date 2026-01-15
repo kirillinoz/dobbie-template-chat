@@ -39,6 +39,14 @@ jobs:
       - name: 'Install Dependencies'
         run: pnpm install --frozen-lockfile
 
+      - name: 'Restore Proposal Cache'
+        uses: actions/cache@v4
+        with:
+          path: scripts/devops/output/proposal-cache.json
+          key: proposal-cache-${{ github.run_id }}
+          restore-keys: |
+            proposal-cache-
+
       - name: 'Discover & Process All Proposals'
         id: discover
         run: pnpm hardhat run ./scripts/devops/discover-proposals.ts --network sepolia
