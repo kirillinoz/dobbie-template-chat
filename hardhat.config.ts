@@ -1,6 +1,5 @@
 import 'dotenv/config';
 import type { HardhatUserConfig } from 'hardhat/config';
-import { configVariable } from 'hardhat/config';
 
 import hardhatViem from '@nomicfoundation/hardhat-viem';
 import hardhatIgnition from '@nomicfoundation/hardhat-ignition-viem';
@@ -49,8 +48,8 @@ const config: HardhatUserConfig = {
     sepolia: {
       type: 'http',
       chainType: 'l1',
-      url: configVariable('RPC_URL'),
-      accounts: [configVariable('WALLET_KEY')],
+      url: process.env.RPC_URL || '',
+      accounts: process.env.WALLET_KEY ? [process.env.WALLET_KEY] : [],
     },
   },
 };

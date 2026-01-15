@@ -16,6 +16,3 @@ dist/
 
 # Secrets
 .env
-
-# Sovereign Tests
-sovereign-test
